@@ -1,0 +1,16 @@
+{
+  "name": "@staabler/memory",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "mocha \"**/*.test.mjs\"",
+    "test-inspect": "node --inspect node_modules/mocha/bin/_mocha \"./**/*.test.mjs\" --exclude \"./**/node_modules/**\"",
+    "test-expose-gc": "node --expose-gc ./node_modules/mocha/bin/_mocha \"./**/*.test.mjs\" --exclude \"./**/node_modules/**\""
+  },
+  "dependencies": {
+    "@staabler/core": "file:../core",
+    "mocha": "^11.7.1"
+  },
+  "devDependencies": {
+    "@staabler/filesystem": "file:../filesystem"
+  }
+}

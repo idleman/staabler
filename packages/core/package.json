@@ -1,0 +1,12 @@
+{
+  "name": "@staabler/core",
+  "version": "1.0.0",
+  "description": "Contains shared code between various modules.",
+  "scripts": {
+    "test": "mocha \"./**/*.test.mjs\" --exclude \"./**/node_modules/**\" --expose-gc"
+  },
+  "author": "Fredrik Olofsson <evoozer@gmail.com>",
+  "devDependencies": {
+    "mocha": "^11.7.1"
+  }
+}

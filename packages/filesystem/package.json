@@ -1,0 +1,10 @@
+{
+  "name": "@staabler/filesystem",
+  "scripts": {
+    "test": "mocha \"./**/*.test.mjs\" --exclude \"./**/node_modules/**\""
+  },
+  "dependencies": {
+    "fs-extra": "^11.3.1",
+    "@staabler/core": "file:../core"
+  }
+}

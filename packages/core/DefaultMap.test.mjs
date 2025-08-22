@@ -17,6 +17,8 @@ describe(getPackageName(import.meta.url), function() {
       strictEqual(map.get('b'), 2);
       strictEqual(map.size, 2);
       strictEqual(map.get('c'), 0); // Default value
+      strictEqual(map.getMaybe('d'), void(0));
+      strictEqual(map.getMaybe('d', 123), 123);
     });
 
   });

@@ -2,11 +2,12 @@
  * MultiIndex allows querying entities by multiple keys.
  */
 import BiMap from './BiMap.mjs';
-import autobind from './autobind.mjs';
 import DefaultMap from './DefaultMap.mjs';
-import isNullish from './isNullish.mjs';
 
-const defaultGetIndexes = () => [];
+
+let lastItemId = 0;
+const createArray = () => [];
+const createIndexMap = () => new DefaultMap(createArray);
 
 /**
  * MultiIndex class for indexing objects by multiple keys.
@@ -18,43 +19,42 @@ export default class MultiIndex {
    * @param {Function} getIndexes - Function that returns array of [keyName, keyValue] pairs for an object
    * @param {Function} ItemMap - Constructor function for the item map (defaults to BiMap)
    */
-  constructor(getIndexes = defaultGetIndexes, ItemMap = BiMap) {
-    autobind(this);
-    const items = new ItemMap();                      // itemId -> value
-    const indexes = new DefaultMap(() => new Map())   // key => bucket
+  constructor(getIndexes = createArray) {
     this.size = 0;
+    const items = new BiMap();                              // itemId -> value
+    const indexes = new DefaultMap(createIndexMap);         // key => value => [itemId]
     this._MultiIndex = { items, indexes, getIndexes };
   }
 
   /**
    * Adds a value to the index.
-   * @param {any} value - The value to add
+   * @param {any} obj - The value to add
    * @returns {MultiIndex} This instance for chaining
    */
-  add(value) {
+  add(obj) {
     const { items, indexes, getIndexes } = this._MultiIndex;
-    const itemId = Symbol(`Item<${Math.floor(Number.MAX_SAFE_INTEGER*Math.random())}>`);
-    const entries = getIndexes(value);
-    if(entries.length === 0) {
+    if(items.inverse.has(obj)) {
       return this;
     }
+
     ++this.size;
-    items.set(itemId, value);
-    entries.forEach(([name, identifier]) => indexes.get(name).set(identifier, itemId));
+    const itemId = Symbol(`Item<${++lastItemId}>`);
+    const entries = getIndexes(obj);
+    items.set(itemId, obj);
+    entries.forEach(([name, value]) => indexes.get(name).get(value).push(itemId));
     return this;
   }
 
   /**
    * Gets a value by key name and identifier.
    * @param {string} name - The key name
-   * @param {any} identifier - The key value
+   * @param {any} value - The key value
    * @returns {any} The value associated with the key, or undefined if not found
    */
-  get(name = '', identifier = null) {
+  get(name = '', value = null) {
     const { items, indexes } = this._MultiIndex;
-    const index = indexes.get(name);
-    const offset = index.get(identifier);
-    return isNullish(offset) ? void(0) : items.get(offset);
+    const itemId = indexes.getMaybe(name)?.getMaybe(value)?.[0];
+    return itemId ? items.get(itemId) : void(0);
   }
 
   /**
@@ -69,18 +69,53 @@ export default class MultiIndex {
 
   /**
    * Removes a value from the index.
-   * @param {any} item - The item to remove
+   * @param {any} obj - The item to remove
    * @returns {MultiIndex} This instance for chaining
    */
-  delete(item) {
+  delete(obj) {
     const { items, indexes, getIndexes } = this._MultiIndex;
-    const itemId = items.inverse?.get(item);
-    if(isNullish(itemId)) {
+    const itemId = items.inverse.get(obj);
+    if(!itemId) {
       return this;
     }
-    items.delete(itemId)
-    getIndexes(item).forEach(([name, identifier]) => indexes.get(name).delete(identifier));
     --this.size;
+    items.delete(itemId);
+    getIndexes(obj).forEach(([name, value]) => {
+      const values = indexes.getMaybe(name);
+      if(!values) {
+        return;
+      }
+      const container = values.getMaybe(value);
+      if(!container) {
+        return;
+      }
+
+      const index = container.indexOf(itemId);
+      if(index === -1) {
+        return;
+      }
+      container.splice(index, 1);
+      if(container.length !== 0) {
+        return;
+      }
+
+      values.delete(value);
+      if(values.size === 0) {
+        indexes.delete(name);
+      }
+    });
+  }
+
+  /**
+   * Return all nodes that matches a specific attribute value
+   * @param {string} name - Attribute name.
+   * @param {any} value - The value of the attribute
+   * @returns {Array} An array of all matching nodes.
+   */
+  getAll(name = '', value = null) {
+    const { items, indexes } = this._MultiIndex;
+    const array = indexes.getMaybe(name)?.getMaybe(value);
+    return array ? array.map(itemId => items.get(itemId)) : [];
   }
 
   /**
@@ -92,4 +127,22 @@ export default class MultiIndex {
     return Array.from(items.values());
   }
 
+  *entries() {
+    for(const value of this.values()) {
+      yield [value, value];
+    }
+  }
+
+  *keys() {
+    yield* this.toArray().values();
+  }
+
+  *values() {
+    yield* this.toArray().values();
+  }
+
+  [Symbol.iterator]() {
+    return this.values();
+  }
+  
 };

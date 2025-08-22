@@ -188,6 +188,21 @@ export default class DefaultMap {
   }
 
   /**
+   * Try to get the value associated with a key, return [defaultValue] if not found.
+   * 
+   * @param {key} - The key to look up
+   * @param {defaultValue} [undefined] - Default value.
+   * @returns {any} The associated value or the default value.
+   */
+  getMaybe(key, defaultValue) {
+    const maybe = this.data.get(key);
+    if(maybe === void(0)) {
+      return defaultValue;
+    }
+    return maybe;
+  }
+
+  /**
    * Removes all key-value pairs from the map.
    * 
    * @example

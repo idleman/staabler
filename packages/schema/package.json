@@ -1,0 +1,12 @@
+{
+  "name": "@staabler/schema",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "mocha \"./**/*.test.mjs\" --exclude \"./**/node_modules/**\""
+  },
+  "dependencies": {
+    "@staabler/core": "file:../core",
+    "ajv": "^8.17.1",
+    "mocha": "^11.7.1"
+  }
+}
